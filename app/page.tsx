@@ -11,6 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 interface GameConfig {
   id: number
   game_name: string
+  currency_name: string
   mode: string
   stock_quantity: number
   price_per_unit: number
@@ -47,9 +48,11 @@ export default function HomePage() {
 
     setSubmitting(true)
 
+    const currencyText = selectedGame.currency_name || 'coins'
+
     const { error } = await supabase.from('transactions').insert([
       {
-        game_name: selectedGame.game_name,
+        game_name: `${selectedGame.game_name} (${currencyText})`,
         type: selectedGame.mode === 'selling' ? 'Compra de Cliente' : 'Venda para Loja',
         amount: Number(amount),
         total_price: calculatedTotal,
@@ -62,7 +65,7 @@ export default function HomePage() {
     if (error) {
       alert('Erro ao processar pedido: ' + error.message)
     } else {
-      alert('🚀 Pedido enviado com sucesso! Entraremos em contacto brevemente.')
+      alert('🚀 Pedido enviado com sucesso! A nossa equipa entrará em contacto.')
       setSelectedGame(null)
       setAmount('')
       setContact('')
@@ -70,7 +73,7 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ backgroundColor: '#080c14', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
+    <div style={{ backgroundColor: '#080c14', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '20px' }}>
       
       {/* Header */}
       <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
@@ -80,31 +83,31 @@ export default function HomePage() {
             COINS STORE
           </h1>
         </div>
-        <a href="/admin" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '13px', background: '#0f172a', border: '1px solid #334155', padding: '10px 18px', borderRadius: '8px', fontWeight: 'bold' }}>
+        <a href="/admin" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '13px', background: '#0f172a', border: '1px solid #334155', padding: '10px 18px', borderRadius: '10px', fontWeight: 'bold' }}>
           ⚙️ Painel Admin
         </a>
       </header>
 
-      {/* Banner Principal */}
+      {/* Banner */}
       <section style={{ textAlign: 'center', margin: '50px 0 40px 0' }}>
         <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-          ⚡ Entrega Rápida & Segura
+          ⚡ Transações Rápidas & Garantidas
         </span>
         <h2 style={{ fontSize: '42px', fontWeight: '900', margin: '15px 0 10px 0', letterSpacing: '-1px' }}>
-          Escolha o seu Servidor
+          Selecione o seu Servidor
         </h2>
         <p style={{ color: '#64748b', fontSize: '18px', maxWidth: '500px', margin: '0 auto' }}>
-          Compre e venda coins dos melhores servidores com cotação atualizada em tempo real.
+          Compre ou venda as moedas do seu jogo favorito com a melhor cotação do mercado.
         </p>
       </section>
 
-      {/* Lista de Servidores em Grid */}
+      {/* Grid de Servidores */}
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
         {loading ? (
           <p style={{ textAlign: 'center', color: '#64748b', fontSize: '18px' }}>A carregar servidores...</p>
         ) : games.length === 0 ? (
           <div style={{ textAlign: 'center', background: '#0f172a', padding: '50px', borderRadius: '16px', border: '1px solid #1e293b' }}>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: '16px' }}>Nenhum servidor configurado. Aceda ao <a href="/admin" style={{ color: '#38bdf8', fontWeight: 'bold' }}>Painel Admin</a> para definir os preços e stocks.</p>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '16px' }}>Nenhum servidor ativo no momento. Aceda ao <a href="/admin" style={{ color: '#38bdf8', fontWeight: 'bold' }}>Painel Admin</a> e guarde as configurações dos jogos.</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
@@ -113,21 +116,18 @@ export default function HomePage() {
                 key={g.id} 
                 style={{ 
                   backgroundColor: '#0f172a', 
-                  borderRadius: '16px', 
+                  borderRadius: '20px', 
                   padding: '28px', 
                   border: '1px solid #1e293b',
                   display: 'flex',
                   flexDirection: 'column',
                   justify: 'space-between',
-                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'
                 }}
               >
                 <div>
-                  {/* Tag de Estado */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 style={{ fontSize: '24px', fontWeight: '800', margin: 0, textTransform: 'capitalize', color: '#f8fafc' }}>{g.game_name}</h3>
+                    <h3 style={{ fontSize: '24px', fontWeight: '800', margin: 0, color: '#f8fafc' }}>{g.game_name}</h3>
                     <span style={{ 
                       backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
                       color: g.mode === 'selling' ? '#4ade80' : '#f87171',
@@ -141,20 +141,20 @@ export default function HomePage() {
                     </span>
                   </div>
 
-                  {/* Informações de Preço e Stock */}
                   <div style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #334155' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Preço / 1k:</span>
-                      <strong style={{ color: '#38bdf8', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
+                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>
+                        Preço / 1k (<strong style={{ color: '#38bdf8', textTransform: 'uppercase' }}>{g.currency_name || 'coins'}</strong>):
+                      </span>
+                      <strong style={{ color: '#22c55e', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Stock Disponível:</span>
-                      <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity.toLocaleString()} Coins</strong>
+                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Stock em Loja:</span>
+                      <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity.toLocaleString()}</strong>
                     </div>
                   </div>
                 </div>
 
-                {/* Botão de Ação Clicável */}
                 <button
                   onClick={() => setSelectedGame(g)}
                   style={{
@@ -167,24 +167,23 @@ export default function HomePage() {
                     fontWeight: '800',
                     cursor: 'pointer',
                     fontSize: '16px',
-                    letterSpacing: '0.5px',
                     boxShadow: g.mode === 'selling' ? '0 4px 15px rgba(2, 132, 199, 0.4)' : '0 4px 15px rgba(220, 38, 38, 0.4)'
                   }}
                 >
-                  {g.mode === 'selling' ? '🛒 Comprar Coins' : '💰 Vender Minhas Coins'}
+                  {g.mode === 'selling' ? `🛒 Comprar ${g.currency_name || 'Coins'}` : `💰 Vender ${g.currency_name || 'Coins'}`}
                 </button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Modal de Pedido Elegante */}
+        {/* Modal de Pedido */}
         {selectedGame && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
             <div style={{ backgroundColor: '#0f172a', padding: '32px', borderRadius: '20px', maxWidth: '450px', width: '100%', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ marginTop: 0, marginBottom: 0, fontSize: '22px', textTransform: 'capitalize', fontWeight: '800' }}>
+                <h3 style={{ marginTop: 0, marginBottom: 0, fontSize: '22px', fontWeight: '800' }}>
                   {selectedGame.mode === 'selling' ? `🛒 Comprar - ${selectedGame.game_name}` : `💰 Vender - ${selectedGame.game_name}`}
                 </h3>
                 <button onClick={() => setSelectedGame(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>✕</button>
@@ -192,7 +191,9 @@ export default function HomePage() {
               
               <form onSubmit={handleOrder}>
                 <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#94a3b8', fontWeight: 'bold' }}>QUANTIDADE DE COINS:</label>
+                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
+                    QUANTIDADE DE {(selectedGame.currency_name || 'COINS').toUpperCase()}:
+                  </label>
                   <input 
                     type="number" 
                     value={amount} 
@@ -201,18 +202,31 @@ export default function HomePage() {
                     required
                     style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '16px', fontWeight: 'bold' }}
                   />
+
+                  {/* Atalhos Rápidos */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    {[1000, 5000, 10000, 50000].map((quick) => (
+                      <button
+                        key={quick}
+                        type="button"
+                        onClick={() => setAmount(String(quick))}
+                        style={{ flex: 1, padding: '6px', backgroundColor: '#1e293b', color: '#38bdf8', border: '1px solid #334155', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        +{quick >= 1000 ? `${quick / 1000}k` : quick}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Cálculo do Preço Total */}
                 {amount && Number(amount) > 0 && (
                   <div style={{ marginBottom: '18px', padding: '16px', backgroundColor: '#1e293b', borderRadius: '10px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Estimado:</span>
+                    <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Estimado Total:</span>
                     <strong style={{ fontSize: '22px', color: '#22c55e' }}>R$ {calculatedTotal.toFixed(2)}</strong>
                   </div>
                 )}
 
                 <div style={{ marginBottom: '24px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#94a3b8', fontWeight: 'bold' }}>SEU DISCORD OU WHATSAPP:</label>
+                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>SEU DISCORD OU WHATSAPP:</label>
                   <input 
                     type="text" 
                     value={contact} 
