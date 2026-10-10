@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// URL de fallback garantida e válida para evitar qualquer falha no build
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('http') 
   ? process.env.NEXT_PUBLIC_SUPABASE_URL 
   : 'https://placeholder.supabase.co'
@@ -11,7 +10,6 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Seu WhatsApp configurado com DDI + DDD + Número
 const ADMIN_WHATSAPP = '5534984113460'
 
 const FALLBACK_GAMES = [
@@ -88,7 +86,6 @@ export default function HomePage() {
 
     setSubmitting(false)
 
-    // Formata mensagem para o seu WhatsApp
     const message = `🔷 *NOVO PEDIDO - BLUE BROTHERS COINS* 🔷\n\n` +
       `🎮 *Jogo:* ${selectedGame.game_name}\n` +
       `💰 *Operação:* ${orderType}\n` +
@@ -345,7 +342,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer style={{ maxWidth: '1100px', margin: '50px auto 20px auto', textAlign: 'center', borderTop: '1px solid #1e293b', paddingTop: '20px', color: '#64748b', fontSize: '13px' }}>
-        © {new Date().getFullYear()} Blue Brothers Coins. Todos os direitos reservados.
+        © 2026 Blue Brothers Coins. Todos os direitos reservados.
       </footer>
     </div>
   )
