@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Blindagem para evitar erro de URL inválida na build estática da Vercel
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
@@ -31,13 +30,11 @@ export default function AdminPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Estados para gerenciar / editar os jogos
   const [gameName, setGameName] = useState('')
   const [mode, setMode] = useState('selling')
   const [stockQuantity, setStockQuantity] = useState('')
 
   const fetchData = async () => {
-    // Se estiver usando o placeholder na build, não tenta buscar dados reais
     if (supabaseUrl.includes('placeholder')) return
 
     setLoading(true)
@@ -57,7 +54,6 @@ export default function AdminPage() {
     e.preventDefault()
     if (!gameName) return
 
-    // Atualiza ou insere o jogo/configuração no Supabase
     const { error } = await supabase
       .from('site_config')
       .upsert([
