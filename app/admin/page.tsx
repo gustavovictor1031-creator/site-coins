@@ -161,16 +161,4 @@ export default function AdminPage() {
               {transactions.map((tx) => (
                 <tr key={tx.id}>
                   <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.id}</td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.game_name}</td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.type}</td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.amount}</td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.user_contact}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </main>
-  )
-}
+                  <td style={{ padding: '10px', border: '1px
