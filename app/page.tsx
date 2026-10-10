@@ -12,9 +12,9 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 const ADMIN_WHATSAPP = '5534984113460'
 
-// MAPA DE SPRITES/ÍCONES DAS MOEDAS (Basta colar o link da imagem real no lugar da string vazia '')
+// MAPA DE SPRITES/ÍCONES DAS MOEDAS (Cole a URL da imagem/sprite entre as aspas quando quiser adicionar)
 const GAME_SPRITES: { [key: string]: string } = {
-  'Pokesigma': '', // Ex: 'https://exemplo.com/sprite-diamond.png'
+  'Pokesigma': '', 
   'Pokeidle World': '',
   'Pokeidl': '',
   'Huntera': '',
@@ -121,14 +121,14 @@ export default function HomePage() {
   return (
     <div style={{ backgroundColor: '#080c14', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '20px' }}>
       
-      {/* Header */}
-      <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
+      {/* Header (Sem botão do admin) */}
+      <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '42px', height: '42px', backgroundColor: '#0284c7', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '20px', color: '#fff', boxShadow: '0 0 15px rgba(2, 132, 199, 0.5)' }}>
             BB
           </div>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0, background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{ fontSize: '26px', fontWeight: '900', margin: 0, background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
               BLUE BROTHERS COINS
             </h1>
             <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -136,10 +136,6 @@ export default function HomePage() {
             </span>
           </div>
         </div>
-        {/* Botão Admin discreto (opcional, pode aceder direto por /admin) */}
-        <a href="/admin" style={{ color: '#64748b', textDecoration: 'none', fontSize: '12px', background: 'transparent', border: '1px solid #1e293b', padding: '8px 12px', borderRadius: '8px', fontWeight: 'bold' }}>
-          Admin
-        </a>
       </header>
 
       {/* Banner */}
@@ -178,7 +174,7 @@ export default function HomePage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {/* Sprite ou Ícone do Jogo */}
+                      {/* Espaço reservado para Sprite das moedas */}
                       <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         {spriteUrl ? (
                           <img src={spriteUrl} alt={g.game_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -242,128 +238,4 @@ export default function HomePage() {
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
             <div style={{ backgroundColor: '#0f172a', padding: '32px', borderRadius: '20px', maxWidth: '450px', width: '100%', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ marginTop: 0, marginBottom: 0, fontSize: '20px', fontWeight: '800' }}>
-                  {selectedGame.mode === 'selling' ? `🛒 Comprar - ${selectedGame.game_name}` : `💰 Vender - ${selectedGame.game_name}`}
-                </h3>
-                <button onClick={() => setSelectedGame(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>✕</button>
-              </div>
-              
-              <form onSubmit={handleOrder}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
-                    NOME DO SEU PERSONAGEM (NICK NO JOGO):
-                  </label>
-                  <input 
-                    type="text" 
-                    value={characterName} 
-                    onChange={(e) => setCharacterName(e.target.value)}
-                    placeholder="Ex: PlayerOne"
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '15px' }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
-                    QUANTIDADE DE {(selectedGame.currency_name || 'COINS').toUpperCase()}:
-                  </label>
-                  <input 
-                    type="number" 
-                    value={amount} 
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Ex: 10000"
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '16px', fontWeight: 'bold' }}
-                  />
-
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    {[1000, 5000, 10000, 50000].map((quick) => (
-                      <button
-                        key={quick}
-                        type="button"
-                        onClick={() => setAmount(String(quick))}
-                        style={{ flex: 1, padding: '6px', backgroundColor: '#1e293b', color: '#38bdf8', border: '1px solid #334155', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        +{quick >= 1000 ? `${quick / 1000}k` : quick}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {amount && Number(amount) > 0 && (
-                  <div style={{ marginBottom: '16px', padding: '14px', backgroundColor: '#1e293b', borderRadius: '10px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Total a Pagar:</span>
-                    <strong style={{ fontSize: '20px', color: '#22c55e' }}>R$ {calculatedTotal.toFixed(2)}</strong>
-                  </div>
-                )}
-
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
-                    SEU WHATSAPP (COM DDD):
-                  </label>
-                  <input 
-                    type="text" 
-                    value={whatsapp} 
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    placeholder="Ex: (34) 99999-9999"
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '15px' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button 
-                    type="button" 
-                    onClick={() => setSelectedGame(null)}
-                    style={{ flex: 1, padding: '14px', backgroundColor: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="submit" 
-                    disabled={submitting}
-                    style={{ flex: 1, padding: '14px', background: 'linear-gradient(to right, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
-                  >
-                    {submitting ? 'A enviar...' : 'Confirmar & Ir p/ WhatsApp'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Seção Quem Somos */}
-        <section style={{ marginTop: '70px', backgroundColor: '#0f172a', borderRadius: '20px', padding: '40px', border: '1px solid #1e293b' }}>
-          <h2 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '15px', color: '#38bdf8' }}>
-            Quem Somos - Blue Brothers Coins
-          </h2>
-          <p style={{ color: '#94a3b8', lineHeight: '1.7', fontSize: '15px', marginBottom: '20px' }}>
-            A **Blue Brothers Coins** é a sua plataforma especializada no comércio de moedas virtuais para os principais servidores de jogos online. Fundada com o compromisso de entregar segurança máxima, rapidez absoluta e cotações justas, facilitamos o processo de compra e venda com atendimento dedicado via WhatsApp.
-          </p>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginTop: '25px' }}>
-            <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>⚡ Entrega Rápida</h3>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Transferências efetuadas logo após a confirmação do pagamento.</p>
-            </div>
-            <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>🛡️ 100% Seguro</h3>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Processo transparente e suporte humanizado direto no WhatsApp.</p>
-            </div>
-            <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>💎 Melhores Cotações</h3>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Preços atualizados diariamente para garantir a melhor negociação.</p>
-            </div>
-          </div>
-        </section>
-
-      </main>
-
-      {/* Footer */}
-      <footer style={{ maxWidth: '1100px', margin: '50px auto 20px auto', textAlign: 'center', borderTop: '1px solid #1e293b', paddingTop: '20px', color: '#64748b', fontSize: '13px' }}>
-        © 2026 Blue Brothers Coins. Todos os direitos reservados.
-      </footer>
-    </div>
-  )
-}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems:
