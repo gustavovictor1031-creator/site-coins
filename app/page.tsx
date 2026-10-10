@@ -31,7 +31,7 @@ export default function HomePage() {
   const [purchaseError, setPurchaseError] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-  // Inicialização segura do Supabase apenas no cliente (evita erros no build da Vercel)
+  // Inicialização segura do Supabase para evitar erros no build estático da Vercel
   const getSupabase = () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
