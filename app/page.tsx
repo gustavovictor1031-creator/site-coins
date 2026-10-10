@@ -9,13 +9,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const GAME_SPRITES: { [key: string]: string } = {
-  'Pokesigma': '/pokesigma.png',
-  'Pokeidle World': '/pokeidle.png',
-  'Pokeidl': '/pokeidl.png',
-  'Huntera': '/huntera.png',
-  'Pokepixel': '/pokepixel.png',
-  'Pkhunt': '/safira.png'
+// Configuração dos ícones/sprites (Pokébola na frente dos pokémons e Tibia para Huntera)
+const GAME_SPRITES: { [key: string]: { icon: string; sprite: string } } = {
+  'Pokesigma': { icon: '/pokeball.png', sprite: '/pokesigma.png' },
+  'Pokeidle World': { icon: '/pokeball.png', sprite: '/pokeidle.png' },
+  'Pokeidl': { icon: '/pokeball.png', sprite: '/pokeidl.png' },
+  'Huntera': { icon: '/tibia_char.png', sprite: '/huntera.png' },
+  'Pokepixel': { icon: '/pokeball.png', sprite: '/pokepixel.png' },
+  'Pkhunt': { icon: '/pokeball.png', sprite: '/safira.png' }
 };
 
 const ADMIN_WHATSAPP = '5534984113460';
@@ -128,7 +129,7 @@ export default function HomePage() {
       padding: '20px' 
     }}>
       
-      {/* Header (sem o botão do Admin) */}
+      {/* Header */}
       <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px 25px', backgroundColor: 'rgba(15, 23, 42, 0.75)', borderRadius: '16px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '42px', height: '42px', backgroundColor: '#0284c7', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '20px', color: '#fff', boxShadow: '0 0 15px rgba(2, 132, 199, 0.5)' }}>
@@ -162,7 +163,7 @@ export default function HomePage() {
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
           {games.map((g) => {
-            const spriteUrl = GAME_SPRITES[g.game_name];
+            const gameSpriteInfo = GAME_SPRITES[g.game_name];
             return (
               <div 
                 key={g.id || g.game_name} 
@@ -180,16 +181,24 @@ export default function HomePage() {
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(30, 41, 59, 0.9)', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {spriteUrl ? (
-                          <img src={spriteUrl} alt={g.game_name} style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {/* Ícone customizado (Pokébola ou Tibia) na frente */}
+                      {gameSpriteInfo?.icon ? (
+                        <img src={gameSpriteInfo.icon} alt="ícone" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                      ) : null}
+
+                      {/* Sprite secundário do jogo */}
+                      <div style={{ width: '38px', height: '38px', borderRadius: '8px', backgroundColor: 'rgba(30, 41, 59, 0.9)', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {gameSpriteInfo?.sprite ? (
+                          <img src={gameSpriteInfo.sprite} alt={g.game_name} style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
                         ) : (
-                          <span style={{ fontSize: '18px' }}>🎮</span>
+                          <span style={{ fontSize: '16px' }}>🎮</span>
                         )}
                       </div>
+
                       <h3 style={{ fontSize: '20px', fontWeight: '800', margin: 0, color: '#f8fafc' }}>{g.game_name}</h3>
                     </div>
+
                     <span style={{ 
                       backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
                       color: g.mode === 'selling' ? '#4ade80' : '#f87171',
