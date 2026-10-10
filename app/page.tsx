@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Inicialização segura para evitar erros na build da Vercel
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+// Validação blindada para a build da Vercel nunca quebrar
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -24,9 +25,11 @@ export default function Home() {
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Buscar os dados de todos os jogos ao carregar a página
   useEffect(() => {
     async function fetchGames() {
+      // Se estivermos usando o placeholder na build, não tenta buscar do banco para evitar erro de rede
+      if (supabaseUrl.includes('placeholder')) return
+
       const { data, error } = await supabase.from('site_config').select('*')
       if (data && data.length > 0) {
         setGames(data)
@@ -37,14 +40,12 @@ export default function Home() {
     fetchGames()
   }, [])
 
-  // Atualizar os dados locais quando o usuário trocar de jogo no select
   const handleGameChange = (gameName: string) => {
     setSelectedGame(gameName)
     const found = games.find(g => g.game_name === gameName)
     if (found) setCurrentGameData(found)
   }
 
-  // Enviar transação
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentGameData) return
@@ -74,7 +75,6 @@ export default function Home() {
     <main style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
       <h1>Loja Automatizada de Coins</h1>
       
-      {/* Seletor de Jogos */}
       <div style={{ marginBottom: '20px' }}>
         <label><strong>Selecione o Jogo / Servidor:</strong></label><br />
         <select 
