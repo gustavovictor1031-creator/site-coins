@@ -12,6 +12,16 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 const ADMIN_WHATSAPP = '5534984113460'
 
+// MAPA DE SPRITES/ÍCONES DAS MOEDAS (Basta colar o link da imagem real no lugar da string vazia '')
+const GAME_SPRITES: { [key: string]: string } = {
+  'Pokesigma': '', // Ex: 'https://exemplo.com/sprite-diamond.png'
+  'Pokeidle World': '',
+  'Pokeidl': '',
+  'Huntera': '',
+  'Pokepixel': '',
+  'Pkhunt': ''
+}
+
 const FALLBACK_GAMES = [
   { id: 1, game_name: 'Pokesigma', currency_name: 'diamond', mode: 'selling', stock_quantity: 50000, price_per_unit: 4.50 },
   { id: 2, game_name: 'Pokeidle World', currency_name: 'diamonds', mode: 'selling', stock_quantity: 120000, price_per_unit: 3.00 },
@@ -122,12 +132,13 @@ export default function HomePage() {
               BLUE BROTHERS COINS
             </h1>
             <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              esse site foi feito para facilitar a compra e venda de moedas em jogos idle de navegador
+              Sua Loja Gamer de Confiança
             </span>
           </div>
         </div>
-        <a href="/admin" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '13px', background: '#0f172a', border: '1px solid #334155', padding: '10px 18px', borderRadius: '10px', fontWeight: 'bold' }}>
-          ⚙️ Painel Admin
+        {/* Botão Admin discreto (opcional, pode aceder direto por /admin) */}
+        <a href="/admin" style={{ color: '#64748b', textDecoration: 'none', fontSize: '12px', background: 'transparent', border: '1px solid #1e293b', padding: '8px 12px', borderRadius: '8px', fontWeight: 'bold' }}>
+          Admin
         </a>
       </header>
 
@@ -147,74 +158,83 @@ export default function HomePage() {
       {/* Grid */}
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-          {games.map((g) => (
-            <div 
-              key={g.id || g.game_name} 
-              style={{ 
-                backgroundColor: '#0f172a', 
-                borderRadius: '20px', 
-                padding: '28px', 
-                border: '1px solid #1e293b',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>
-                      🎮
-                    </div>
-                    <h3 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: '#f8fafc' }}>{g.game_name}</h3>
-                  </div>
-                  <span style={{ 
-                    backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
-                    color: g.mode === 'selling' ? '#4ade80' : '#f87171',
-                    padding: '6px 12px', 
-                    borderRadius: '20px', 
-                    fontSize: '12px',
-                    fontWeight: '800',
-                    border: g.mode === 'selling' ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
-                  }}>
-                    {g.mode === 'selling' ? '🟢 LOJA VENDE' : '🔴 LOJA COMPRA'}
-                  </span>
-                </div>
+          {games.map((g) => {
+            const spriteUrl = GAME_SPRITES[g.game_name] || ''
 
-                <div style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #334155' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '14px' }}>
-                      Preço / 1k (<strong style={{ color: '#38bdf8', textTransform: 'uppercase' }}>{g.currency_name || 'coins'}</strong>):
-                    </span>
-                    <strong style={{ color: '#22c55e', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '14px' }}>Estoque em Loja:</span>
-                    <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity?.toLocaleString()}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedGame(g)}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  background: g.mode === 'selling' ? 'linear-gradient(to right, #0284c7, #0369a1)' : 'linear-gradient(to right, #dc2626, #b91c1c)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  boxShadow: g.mode === 'selling' ? '0 4px 15px rgba(2, 132, 199, 0.4)' : '0 4px 15px rgba(220, 38, 38, 0.4)'
+            return (
+              <div 
+                key={g.id || g.game_name} 
+                style={{ 
+                  backgroundColor: '#0f172a', 
+                  borderRadius: '20px', 
+                  padding: '28px', 
+                  border: '1px solid #1e293b',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'
                 }}
               >
-                {g.mode === 'selling' ? `🛒 Comprar ${g.currency_name || 'Coins'}` : `💰 Vender ${g.currency_name || 'Coins'}`}
-              </button>
-            </div>
-          ))}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {/* Sprite ou Ícone do Jogo */}
+                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        {spriteUrl ? (
+                          <img src={spriteUrl} alt={g.game_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ fontSize: '16px' }}>🎮</span>
+                        )}
+                      </div>
+                      <h3 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: '#f8fafc' }}>{g.game_name}</h3>
+                    </div>
+                    <span style={{ 
+                      backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+                      color: g.mode === 'selling' ? '#4ade80' : '#f87171',
+                      padding: '6px 12px', 
+                      borderRadius: '20px', 
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      border: g.mode === 'selling' ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      {g.mode === 'selling' ? '🟢 LOJA VENDE' : '🔴 LOJA COMPRA'}
+                    </span>
+                  </div>
+
+                  <div style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #334155' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>
+                        Preço / 1k (<strong style={{ color: '#38bdf8', textTransform: 'uppercase' }}>{g.currency_name || 'coins'}</strong>):
+                      </span>
+                      <strong style={{ color: '#22c55e', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Estoque em Loja:</span>
+                      <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity?.toLocaleString()}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSelectedGame(g)}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: g.mode === 'selling' ? 'linear-gradient(to right, #0284c7, #0369a1)' : 'linear-gradient(to right, #dc2626, #b91c1c)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    boxShadow: g.mode === 'selling' ? '0 4px 15px rgba(2, 132, 199, 0.4)' : '0 4px 15px rgba(220, 38, 38, 0.4)'
+                  }}
+                >
+                  {g.mode === 'selling' ? `🛒 Comprar ${g.currency_name || 'Coins'}` : `💰 Vender ${g.currency_name || 'Coins'}`}
+                </button>
+              </div>
+            )
+          })}
         </div>
 
         {/* Modal */}
