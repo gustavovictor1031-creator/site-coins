@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+// Inicialização segura com fallback estrito para URL válida do Supabase
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -46,6 +48,8 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
 
   const fetchData = async () => {
+    if (supabaseUrl.includes('placeholder')) return
+
     try {
       const { data: gamesData } = await supabase.from('site_config').select('*')
       const { data: transData } = await supabase.from('transactions').select('*').order('id', { ascending: false })
@@ -76,6 +80,11 @@ export default function AdminPage() {
 
   const handleSaveGame = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (supabaseUrl.includes('placeholder')) {
+      alert('⚠️ Erro: Variáveis do Supabase não configuradas na Vercel!')
+      return
+    }
+
     setSaving(true)
 
     try {
