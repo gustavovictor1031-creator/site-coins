@@ -2,10 +2,11 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Inicialização segura para evitar erros na build da Vercel
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface GameConfig {
   id: number
@@ -54,7 +55,7 @@ export default function Home() {
         game_name: selectedGame,
         type: currentGameData.mode === 'selling' ? 'sale' : 'purchase',
         amount: Number(amount),
-        price: Number(amount) * 1.5, // Preço base fictício por coin
+        price: Number(amount) * 1.5,
         user_contact: contact
       }
     ])
