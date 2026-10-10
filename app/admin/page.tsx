@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Inicialização segura com fallback estrito para URL válida do Supabase
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
