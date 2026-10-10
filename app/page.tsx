@@ -128,8 +128,8 @@ export default function HomePage() {
       padding: '20px' 
     }}>
       
-      {/* Header */}
-      <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 25px', backgroundColor: 'rgba(15, 23, 42, 0.75)', borderRadius: '16px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      {/* Header (sem o botão do Admin) */}
+      <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px 25px', backgroundColor: 'rgba(15, 23, 42, 0.75)', borderRadius: '16px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '42px', height: '42px', backgroundColor: '#0284c7', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '20px', color: '#fff', boxShadow: '0 0 15px rgba(2, 132, 199, 0.5)' }}>
             BB
@@ -138,14 +138,11 @@ export default function HomePage() {
             <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0, background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
               BLUE BROTHERS COINS
             </h1>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', textAlign: 'center' }}>
               Sua Loja Gamer de Confiança
             </span>
           </div>
         </div>
-        <a href="/admin" style={{ color: '#38bdf8', textDecoration: 'none', fontSize: '13px', background: 'rgba(30, 41, 59, 0.8)', border: '1px solid #334155', padding: '10px 18px', borderRadius: '10px', fontWeight: 'bold' }}>
-          ⚙️ Painel Admin
-        </a>
       </header>
 
       {/* Banner */}
