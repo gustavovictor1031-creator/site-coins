@@ -3,14 +3,12 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Inicialização segura com fallback estrito para URL válida do Supabase (Evita erros de prerender na Vercel)
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Dicionário de Sprites em pixel art para cada jogo
 const GAME_SPRITES: { [key: string]: string } = {
   'Pokesigma': '/pokesigma.png',
   'Pokeidle World': '/pokeidle.png',
@@ -20,7 +18,6 @@ const GAME_SPRITES: { [key: string]: string } = {
   'Pkhunt': '/safira.png'
 };
 
-// Seu WhatsApp configurado com DDI + DDD + Número
 const ADMIN_WHATSAPP = '5534984113460';
 
 const FALLBACK_GAMES = [
@@ -97,7 +94,6 @@ export default function HomePage() {
 
     setSubmitting(false);
 
-    // Formata mensagem para o seu WhatsApp
     const message = `🔷 *NOVO PEDIDO - BLUE BROTHERS COINS* 🔷\n\n` +
       `🎮 *Jogo:* ${selectedGame.game_name}\n` +
       `💰 *Operação:* ${orderType}\n` +
@@ -371,7 +367,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer style={{ maxWidth: '1100px', margin: '50px auto 20px auto', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', color: '#94a3b8', fontSize: '13px' }}>
-        © {new Date().getFullYear()} Blue Brothers Coins. Todos os direitos reservados.
+        © 2026 Blue Brothers Coins. Todos os direitos reservados.
       </footer>
     </div>
   );
