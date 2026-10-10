@@ -3,10 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 const GAME_SPRITES: { [key: string]: string } = {
   'Pokesigma': '/pokesigma.png',
   'Pokeidle World': '/pokeidle.png',
@@ -35,12 +31,20 @@ export default function HomePage() {
   const [purchaseError, setPurchaseError] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
+  // Inicialização segura do Supabase apenas no cliente (evita erros no build da Vercel)
+  const getSupabase = () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+    return createClient(supabaseUrl, supabaseAnonKey);
+  };
+
   useEffect(() => {
     fetchStocks();
   }, []);
 
   const fetchStocks = async () => {
     try {
+      const supabase = getSupabase();
       const { data, error } = await supabase.from('game_stock').select('*');
       if (error) throw error;
       if (data) setStocks(data);
@@ -79,6 +83,7 @@ export default function HomePage() {
     setPurchaseError('');
 
     try {
+      const supabase = getSupabase();
       const newStockAmount = selectedStock.stock_amount - amountToBuy;
       const { error: updateError } = await supabase
         .from('game_stock')
