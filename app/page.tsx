@@ -13,6 +13,7 @@ interface GameConfig {
   game_name: string
   mode: string
   stock_quantity: number
+  price_per_unit: number
 }
 
 export default function HomePage() {
@@ -36,6 +37,11 @@ export default function HomePage() {
     fetchGames()
   }, [])
 
+  // Cálculo automático do preço total (Preço por 1000 coins * (quantidade / 1000))
+  const calculatedTotal = selectedGame && amount 
+    ? (Number(amount) / 1000) * Number(selectedGame.price_per_unit || 0) 
+    : 0
+
   const handleOrder = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedGame || !amount || !contact) return
@@ -47,7 +53,7 @@ export default function HomePage() {
         game_name: selectedGame.game_name,
         type: selectedGame.mode === 'selling' ? 'Compra de Cliente' : 'Venda para Loja',
         amount: Number(amount),
-        price: 0,
+        total_price: calculatedTotal,
         user_contact: contact,
       }
     ])
@@ -115,8 +121,11 @@ export default function HomePage() {
                       {g.mode === 'selling' ? 'Disponível' : 'A Comprar'}
                     </span>
                   </div>
-                  <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '20px' }}>
+                  <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>
                     Stock Atual: <strong style={{ color: '#f8fafc' }}>{g.stock_quantity.toLocaleString()} Coins</strong>
+                  </p>
+                  <p style={{ color: '#38bdf8', fontSize: '15px', marginBottom: '20px', fontWeight: 'bold' }}>
+                    Preço: R$ {Number(g.price_per_unit || 0).toFixed(2)} <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'normal' }}>(por 1k)</span>
                   </p>
                 </div>
 
@@ -141,12 +150,12 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Modal de Pedido */}
+        {/* Modal de Pedido com Cálculo Automático */}
         {selectedGame && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
             <div style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', maxWidth: '450px', width: '100%', border: '1px solid #334155' }}>
               <h3 style={{ marginTop: 0, fontSize: '22px', textTransform: 'capitalize' }}>
-                {selectedGame.mode === 'selling' ? `Comprar Coins - ${selectedGame.game_name}` : `Vender Coins - ${selectedGame.game_name}`}
+                {selectedGame.mode === 'selling' ? `Comprar - ${selectedGame.game_name}` : `Vender - ${selectedGame.game_name}`}
               </h3>
               
               <form onSubmit={handleOrder}>
@@ -161,6 +170,16 @@ export default function HomePage() {
                     style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff', boxSizing: 'border-box' }}
                   />
                 </div>
+
+                {/* Caixa de resumo do preço calculado */}
+                {amount && Number(amount) > 0 && (
+                  <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#0f172a', borderRadius: '6px', border: '1px solid #334155' }}>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#94a3b8' }}>Valor Total a Pagar / Receber:</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#22c55e' }}>
+                      R$ {calculatedTotal.toFixed(2)}
+                    </p>
+                  </div>
+                )}
 
                 <div style={{ marginBottom: '24px' }}>
                   <label style={{ display: 'block', fontSize: '14px', marginBottom: '6px', color: '#94a3b8' }}>O seu Discord ou WhatsApp:</label>
