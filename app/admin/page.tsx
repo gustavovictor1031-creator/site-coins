@@ -30,9 +30,9 @@ export default function HomePage() {
         return
       }
       const { data } = await supabase.from('site_config').select('*')
-      if (data) {
+      if (data && data.length > 0) {
         setGames(data)
-        if (data.length > 0) setSelectedGame(data[0].game_name)
+        setSelectedGame(data[0].game_name)
       }
       setLoading(false)
     }
@@ -51,7 +51,7 @@ export default function HomePage() {
         game_name: selectedGame,
         type: currentGame?.mode === 'selling' ? 'Compra de Cliente' : 'Venda para Loja',
         amount: Number(amount),
-        price: 0, // Pode ajustar se quiser calcular preço por unidade
+        price: 0,
         user_contact: contact,
       }
     ])
@@ -78,13 +78,13 @@ export default function HomePage() {
         <p>A carregar loja...</p>
       ) : games.length === 0 ? (
         <div style={{ background: '#fff3cd', padding: '20px', borderRadius: '8px', border: '1px solid #ffeeba' }}>
-          <p>Nenhum jogo configurado no momento. Aceda ao <a href="/admin">Painel Admin</a> para adicionar o primeiro jogo.</p>
+          <p>Nenhum jogo configurado no momento. Aceda ao <a href="/admin">Painel Admin</a> para adicionar jogos.</p>
         </div>
       ) : (
         <div style={{ background: '#f9f9f9', padding: '25px', borderRadius: '8px', border: '1px solid #ddd' }}>
           <form onSubmit={handleSubmitOrder}>
             <div style={{ marginBottom: '15px' }}>
-              <label>Selecione o Jogo / Servidor:</label><br />
+              <label style={{ fontWeight: 'bold' }}>Selecione o Jogo / Servidor:</label><br />
               <select 
                 value={selectedGame} 
                 onChange={(e) => setSelectedGame(e.target.value)}
@@ -102,14 +102,14 @@ export default function HomePage() {
               <div style={{ marginBottom: '15px', padding: '12px', background: currentGame.mode === 'selling' ? '#e2f0d9' : '#fce4d6', borderRadius: '6px' }}>
                 <p style={{ margin: 0, fontWeight: 'bold' }}>
                   {currentGame.mode === 'selling' 
-                    ? `🟢 Estado: A Vender Coins | Stock disponível: ${currentGame.stock_quantity}` 
-                    : `🔴 Estado: A Comprar de Jogadores | Procura ativamente coins!`}
+                    ? `🟢 Estado: Vendendo Coins | Stock: ${currentGame.stock_quantity}` 
+                    : `🔴 Estado: Comprando Coins de Jogadores`}
                 </p>
               </div>
             )}
 
             <div style={{ marginBottom: '15px' }}>
-              <label>Quantidade de Coins:</label><br />
+              <label style={{ fontWeight: 'bold' }}>Quantidade de Coins:</label><br />
               <input 
                 type="number" 
                 value={amount} 
@@ -121,12 +121,12 @@ export default function HomePage() {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label>O seu Discord / Contacto:</label><br />
+              <label style={{ fontWeight: 'bold' }}>Seu Discord ou WhatsApp (para contacto):</label><br />
               <input 
                 type="text" 
                 value={contact} 
                 onChange={(e) => setContact(e.target.value)} 
-                placeholder="Ex: seu_discord#1234" 
+                placeholder="Ex: seu_discord#1234 ou (11) 99999-9999" 
                 required 
                 style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
               />
@@ -137,7 +137,7 @@ export default function HomePage() {
               disabled={submitting}
               style={{ width: '100%', background: '#0070f3', color: '#fff', padding: '12px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
             >
-              {submitting ? 'A enviar...' : 'Realizar Pedido'}
+              {submitting ? 'A enviar pedido...' : 'Realizar Pedido'}
             </button>
           </form>
         </div>
