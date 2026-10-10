@@ -3,12 +3,11 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder-key')
 
-// Mapeamento oficial dos 6 servidores e suas moedas
 const GAMES_CONFIG = [
   { name: 'Pokesigma', currency: 'diamond' },
   { name: 'Pokeidle World', currency: 'diamonds' },
@@ -45,18 +44,24 @@ export default function AdminPage() {
   const [stockQuantity, setStockQuantity] = useState('')
   const [pricePerUnit, setPricePerUnit] = useState('')
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   const fetchData = async () => {
-    if (supabaseUrl.includes('placeholder')) {
+    if (!supabaseUrl) {
       setLoading(false)
       return
     }
 
-    const { data: gamesData } = await supabase.from('site_config').select('*')
-    const { data: transData } = await supabase.from('transactions').select('*').order('id', { ascending: false })
+    try {
+      const { data: gamesData, error: gError } = await supabase.from('site_config').select('*')
+      const { data: transData } = await supabase.from('transactions').select('*').order('id', { ascending: false })
 
-    if (gamesData) setGames(gamesData)
-    if (transData) setTransactions(transData)
+      if (gError) console.error(gError)
+      if (gamesData) setGames(gamesData)
+      if (transData) setTransactions(transData)
+    } catch (err) {
+      console.error('Erro de ligação ao Supabase:', err)
+    }
     setLoading(false)
   }
 
@@ -79,42 +84,55 @@ export default function AdminPage() {
 
   const handleSaveGame = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    const existing = games.find(g => g.game_name.toLowerCase() === selectedGame.name.toLowerCase())
-
-    let error = null
-
-    if (existing) {
-      const res = await supabase
-        .from('site_config')
-        .update({ 
-          mode, 
-          currency_name: selectedGame.currency,
-          stock_quantity: Number(stockQuantity) || 0,
-          price_per_unit: Number(pricePerUnit) || 0
-        })
-        .eq('id', existing.id)
-      error = res.error
-    } else {
-      const res = await supabase
-        .from('site_config')
-        .insert([
-          { 
-            game_name: selectedGame.name, 
-            currency_name: selectedGame.currency,
-            mode, 
-            stock_quantity: Number(stockQuantity) || 0,
-            price_per_unit: Number(pricePerUnit) || 0
-          }
-        ])
-      error = res.error
+    if (!supabaseUrl) {
+      alert('⚠️ Erro: As variáveis de ambiente do Supabase não estão configuradas na Vercel!')
+      return
     }
 
-    if (error) {
-      alert('Erro ao guardar no Supabase: ' + error.message)
-    } else {
-      alert(`✅ Servidor ${selectedGame.name} atualizado com sucesso!`)
-      fetchData()
+    setSaving(true)
+
+    try {
+      const existing = games.find(g => g.game_name.toLowerCase() === selectedGame.name.toLowerCase())
+
+      let error = null
+
+      if (existing) {
+        const res = await supabase
+          .from('site_config')
+          .update({ 
+            mode, 
+            currency_name: selectedGame.currency,
+            stock_quantity: Number(stockQuantity) || 0,
+            price_per_unit: Number(pricePerUnit) || 0
+          })
+          .eq('id', existing.id)
+        error = res.error
+      } else {
+        const res = await supabase
+          .from('site_config')
+          .insert([
+            { 
+              game_name: selectedGame.name, 
+              currency_name: selectedGame.currency,
+              mode, 
+              stock_quantity: Number(stockQuantity) || 0,
+              price_per_unit: Number(pricePerUnit) || 0
+            }
+          ])
+        error = res.error
+      }
+
+      if (error) {
+        alert('Erro ao guardar: ' + error.message)
+      } else {
+        alert(`✅ Servidor ${selectedGame.name} guardado com sucesso! A redirecionar para a loja...`)
+        // Redireciona automaticamente para a página dos clientes
+        window.location.href = '/'
+      }
+    } catch (err: any) {
+      alert('Falha na requisição: ' + (err.message || 'Erro desconhecido. Verifique a conexão com o Supabase.'))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -129,7 +147,7 @@ export default function AdminPage() {
               ⚡ Painel Administrativo de Stocks & Preços
             </h1>
             <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>
-              Selecione o servidor abaixo para definir preços e quantidade disponível na loja
+              Ao guardar, será redirecionado automaticamente para a loja pública dos clientes.
             </p>
           </div>
           <a href="/" style={{ color: '#38bdf8', textDecoration: 'none', background: '#0f172a', padding: '10px 18px', borderRadius: '10px', border: '1px solid #334155', fontWeight: 'bold', fontSize: '14px' }}>
@@ -140,7 +158,7 @@ export default function AdminPage() {
         {/* Seleção Clicável de Servidores */}
         <div style={{ backgroundColor: '#0f172a', padding: '24px', borderRadius: '16px', marginBottom: '30px', border: '1px solid #1e293b' }}>
           <h2 style={{ marginTop: 0, fontSize: '14px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', fontWeight: '800' }}>
-            1. Clique no Servidor que Deseja Alterar:
+            1. Selecione o Servidor:
           </h2>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }}>
@@ -163,8 +181,7 @@ export default function AdminPage() {
                     fontSize: '15px',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    boxShadow: isSelected ? '0 0 20px rgba(56, 189, 248, 0.25)' : 'none',
-                    transition: 'all 0.15s ease-in-out'
+                    boxShadow: isSelected ? '0 0 20px rgba(56, 189, 248, 0.25)' : 'none'
                   }}
                 >
                   <div style={{ fontSize: '16px' }}>🎮 {item.name}</div>
@@ -177,7 +194,7 @@ export default function AdminPage() {
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '6px' }}>
-                      Não configurado
+                      Pendente
                     </div>
                   )}
                 </button>
@@ -185,7 +202,7 @@ export default function AdminPage() {
             })}
           </div>
 
-          {/* Form do Servidor Selecionado */}
+          {/* Form */}
           <form onSubmit={handleSaveGame} style={{ backgroundColor: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
               ⚙️ A Configurar: <span style={{ color: '#fff' }}>{selectedGame.name}</span> 
@@ -241,52 +258,12 @@ export default function AdminPage() {
 
             <button 
               type="submit" 
+              disabled={saving}
               style={{ width: '100%', padding: '14px', background: 'linear-gradient(to right, #22c55e, #16a34a)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer', fontSize: '16px', boxShadow: '0 4px 15px rgba(34, 197, 94, 0.3)' }}
             >
-              💾 Guardar Dados de {selectedGame.name}
+              {saving ? 'A guardar...' : `💾 Guardar e Ir para a Loja (${selectedGame.name})`}
             </button>
           </form>
-        </div>
-
-        {/* Historico de Pedidos */}
-        <div style={{ backgroundColor: '#0f172a', padding: '24px', borderRadius: '16px', border: '1px solid #1e293b' }}>
-          <h2 style={{ marginTop: 0, fontSize: '18px', color: '#f8fafc', marginBottom: '16px', fontWeight: '800' }}>
-            📋 Pedidos Recebidos dos Clientes
-          </h2>
-          {transactions.length === 0 ? (
-            <p style={{ color: '#64748b' }}>Nenhum pedido registado até ao momento.</p>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #334155', textAlign: 'left', color: '#94a3b8', fontSize: '13px' }}>
-                    <th style={{ padding: '12px' }}>ID</th>
-                    <th style={{ padding: '12px' }}>Servidor</th>
-                    <th style={{ padding: '12px' }}>Tipo</th>
-                    <th style={{ padding: '12px' }}>Qtd</th>
-                    <th style={{ padding: '12px' }}>Valor Total</th>
-                    <th style={{ padding: '12px' }}>Contacto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((t) => (
-                    <tr key={t.id} style={{ borderBottom: '1px solid #1e293b' }}>
-                      <td style={{ padding: '12px', color: '#64748b' }}>#{t.id}</td>
-                      <td style={{ padding: '12px', fontWeight: 'bold' }}>{t.game_name}</td>
-                      <td style={{ padding: '12px' }}>
-                        <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', background: t.type.includes('Compra') ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: t.type.includes('Compra') ? '#4ade80' : '#f87171' }}>
-                          {t.type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px' }}>{t.amount.toLocaleString()}</td>
-                      <td style={{ padding: '12px', color: '#22c55e', fontWeight: 'bold' }}>R$ {Number(t.total_price || 0).toFixed(2)}</td>
-                      <td style={{ padding: '12px', color: '#38bdf8', fontWeight: 'bold' }}>{t.user_contact}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
 
       </div>
