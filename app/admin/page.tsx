@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Blindagem para evitar erro de URL inválida na build estática da Vercel
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseUrl = (rawUrl && rawUrl.startsWith('http')) ? rawUrl : 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface GameConfig {
   id: number
@@ -14,103 +16,161 @@ interface GameConfig {
   stock_quantity: number
 }
 
+interface Transaction {
+  id: number
+  game_name: string
+  type: string
+  amount: number
+  price: number
+  user_contact: string
+  created_at: string
+}
+
 export default function AdminPage() {
   const [games, setGames] = useState<GameConfig[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Buscar todos os jogos
-  const fetchGames = async () => {
-    const { data } = await supabase.from('site_config').select('*').order('id')
-    if (data) setGames(data)
+  // Estados para gerenciar / editar os jogos
+  const [gameName, setGameName] = useState('')
+  const [mode, setMode] = useState('selling')
+  const [stockQuantity, setStockQuantity] = useState('')
+
+  const fetchData = async () => {
+    // Se estiver usando o placeholder na build, não tenta buscar dados reais
+    if (supabaseUrl.includes('placeholder')) return
+
+    setLoading(true)
+    const { data: configData } = await supabase.from('site_config').select('*')
+    if (configData) setGames(configData)
+
+    const { data: txData } = await supabase.from('transactions').select('*').order('id', { ascending: false })
+    if (txData) setTransactions(txData)
+    setLoading(false)
   }
 
   useEffect(() => {
-    fetchGames()
+    fetchData()
   }, [])
 
-  // Atualizar estoque ou modo no Supabase
-  const handleUpdate = async (id: number, newMode: string, newStock: number) => {
-    setLoading(true)
+  const handleUpdateConfig = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!gameName) return
+
+    // Atualiza ou insere o jogo/configuração no Supabase
     const { error } = await supabase
       .from('site_config')
-      .update({ mode: newMode, stock_quantity: newStock })
-      .eq('id', id)
+      .upsert([
+        { 
+          game_name: gameName, 
+          mode: mode, 
+          stock_quantity: Number(stockQuantity) 
+        }
+      ], { onConflict: 'game_name' })
 
     if (error) {
-      alert('Erro ao atualizar!')
+      alert('Erro ao atualizar configuração: ' + error.message)
     } else {
-      alert('Atualizado com sucesso!')
-      fetchGames()
+      alert('Configuração salva com sucesso!')
+      setGameName('')
+      setStockQuantity('')
+      fetchData()
     }
-    setLoading(false)
   }
 
   return (
     <main style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>Painel Administrativo - Estoque de Coins</h1>
-      <p>Gerencie o status e o estoque de cada jogo em tempo real.</p>
-      
-      <div style={{ marginTop: '20px' }}>
-        {games.map((game) => (
-          <GameRow key={game.id} game={game} onUpdate={handleUpdate} loading={loading} />
-        ))}
+      <h1>Painel Administrativo - Coins</h1>
+      <p><a href="/" style={{ color: '#0070f3' }}>← Voltar para a Loja</a></p>
+
+      <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #ddd' }}>
+        <h2>Adicionar ou Atualizar Jogo / Modo</h2>
+        <form onSubmit={handleUpdateConfig}>
+          <div style={{ marginBottom: '15px' }}>
+            <label>Nome do Jogo / Servidor:</label><br />
+            <input 
+              type="text" 
+              value={gameName} 
+              onChange={(e) => setGameName(e.target.value)} 
+              placeholder="Ex: Pokepixel" 
+              required 
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label>Modo de Operação:</label><br />
+            <select 
+              value={mode} 
+              onChange={(e) => setMode(e.target.value)}
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            >
+              <option value="selling">🟢 Vendendo Coins (Loja vende)</option>
+              <option value="buying">🔴 Comprando de Usuários (Estoque esgotado)</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label>Quantidade em Estoque:</label><br />
+            <input 
+              type="number" 
+              value={stockQuantity} 
+              onChange={(e) => setStockQuantity(e.target.value)} 
+              placeholder="Ex: 5000" 
+              required 
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            style={{ background: '#28a745', color: '#fff', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px' }}
+          >
+            Salvar / Atualizar Jogo
+          </button>
+        </form>
       </div>
-      
-      <div style={{ marginTop: '30px' }}>
-        <a href="/" style={{ color: '#0070f3', textDecoration: 'underline' }}>← Voltar para o Site Principal</a>
+
+      <div style={{ marginBottom: '30px' }}>
+        <h2>Jogos Cadastrados</h2>
+        {loading ? <p>Carregando...</p> : (
+          <ul style={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '20px' }}>
+            {games.map((g) => (
+              <li key={g.id} style={{ marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+                <strong>{g.game_name}</strong> — Modo: <code>{g.mode}</code> — Estoque: <strong>{g.stock_quantity}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <h2>Transações / Solicitações Recentes</h2>
+        {loading ? <p>Carregando...</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ background: '#f1f1f1', textAlign: 'left' }}>
+                <th style={{ padding: '10px', border: '1px solid #ddd' }}>ID</th>
+                <th style={{ padding: '10px', border: '1px solid #ddd' }}>Jogo</th>
+                <th style={{ padding: '10px', border: '1px solid #ddd' }}>Tipo</th>
+                <th style={{ padding: '10px', border: '1px solid #ddd' }}>Qtd</th>
+                <th style={{ padding: '10px', border: '1px solid #ddd' }}>Contato</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((tx) => (
+                <tr key={tx.id}>
+                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.id}</td>
+                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.game_name}</td>
+                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.type}</td>
+                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.amount}</td>
+                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>{tx.user_contact}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </main>
-  )
-}
-
-// Componente auxiliar para cada linha de jogo
-function GameRow({ game, onUpdate, loading }: { game: GameConfig, onUpdate: any, loading: boolean }) {
-  const [mode, setMode] = useState(game.mode)
-  const [stock, setStock] = useState(game.stock_quantity)
-
-  // Atualiza os estados locais se mudarem no banco
-  useEffect(() => {
-    setMode(game.mode)
-    setStock(game.stock_quantity)
-  }, [game])
-
-  return (
-    <div style={{ background: '#f9f9f9', border: '1px solid #ddd', padding: '15px', borderRadius: '8px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-      <div>
-        <h3 style={{ margin: '0 0 5px 0' }}>{game.game_name}</h3>
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <div>
-          <label style={{ fontSize: '12px', display: 'block' }}>Modo:</label>
-          <select 
-            value={mode} 
-            onChange={(e) => setMode(e.target.value)}
-            style={{ padding: '5px' }}
-          >
-            <option value="selling">🟢 Vendendo</option>
-            <option value="buying">🔴 Comprando (Sem Estoque)</option>
-          </select>
-        </div>
-
-        <div>
-          <label style={{ fontSize: '12px', display: 'block' }}>Estoque:</label>
-          <input 
-            type="number" 
-            value={stock} 
-            onChange={(e) => setStock(Number(e.target.value))}
-            style={{ width: '80px', padding: '5px' }}
-          />
-        </div>
-
-        <button 
-          onClick={() => onUpdate(game.id, mode, stock)}
-          disabled={loading}
-          style={{ background: '#28a745', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', marginTop: '15px' }}
-        >
-          Salvar
-        </button>
-      </div>
-    </div>
   )
 }
