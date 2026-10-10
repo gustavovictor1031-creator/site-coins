@@ -122,7 +122,7 @@ export default function HomePage() {
               BLUE BROTHERS COINS
             </h1>
             <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Sua Loja Gamer de Confiança
+              esse site foi feito para facilitar a compra e venda de moedas em jogos idle de navegador
             </span>
           </div>
         </div>
