@@ -2,13 +2,17 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+// URL de fallback garantida e válida para evitar qualquer falha no build
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('http') 
+  ? process.env.NEXT_PUBLIC_SUPABASE_URL 
+  : 'https://placeholder.supabase.co'
+
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// 5534984113460 (Formato: 55 + DDD + Número)
-const ADMIN_WHATSAPP = '5534999999999'
+// Seu WhatsApp configurado com DDI + DDD + Número
+const ADMIN_WHATSAPP = '5534984113460'
 
 const FALLBACK_GAMES = [
   { id: 1, game_name: 'Pokesigma', currency_name: 'diamond', mode: 'selling', stock_quantity: 50000, price_per_unit: 4.50 },
@@ -38,13 +42,15 @@ export default function HomePage() {
 
   useEffect(() => {
     async function fetchGames() {
+      if (supabaseUrl.includes('placeholder')) return
+
       try {
         const { data } = await supabase.from('site_config').select('*')
         if (data && data.length > 0) {
           setGames(data)
         }
       } catch (err) {
-        console.error('A usar fallback:', err)
+        console.error('A usar dados de fallback:', err)
       }
     }
     fetchGames()
@@ -63,40 +69,40 @@ export default function HomePage() {
     const currencyText = selectedGame.currency_name || 'coins'
     const orderType = selectedGame.mode === 'selling' ? 'Compra de Cliente' : 'Venda para Loja'
 
-    // 1. Grava a transação na base de dados
     try {
-      await supabase.from('transactions').insert([
-        {
-          game_name: `${selectedGame.game_name} (${currencyText})`,
-          type: orderType,
-          amount: Number(amount),
-          total_price: calculatedTotal,
-          user_contact: whatsapp,
-          character_name: characterName,
-        }
-      ])
+      if (!supabaseUrl.includes('placeholder')) {
+        await supabase.from('transactions').insert([
+          {
+            game_name: `${selectedGame.game_name} (${currencyText})`,
+            type: orderType,
+            amount: Number(amount),
+            total_price: calculatedTotal,
+            user_contact: whatsapp,
+            character_name: characterName,
+          }
+        ])
+      }
     } catch (err) {
       console.error(err)
     }
 
     setSubmitting(false)
 
-    // 2. Formata mensagem para o WhatsApp do atendimento
+    // Formata mensagem para o seu WhatsApp
     const message = `🔷 *NOVO PEDIDO - BLUE BROTHERS COINS* 🔷\n\n` +
       `🎮 *Jogo:* ${selectedGame.game_name}\n` +
       `💰 *Operação:* ${orderType}\n` +
       `👤 *Personagem (Nick):* ${characterName}\n` +
       `🪙 *Quantidade:* ${Number(amount).toLocaleString()} ${currencyText.toUpperCase()}\n` +
       `💵 *Valor Total:* R$ ${calculatedTotal.toFixed(2)}\n` +
-      `📱 *WhatsApp:* ${whatsapp}\n\n` +
+      `📱 *WhatsApp do Cliente:* ${whatsapp}\n\n` +
       `Aguardando confirmação para envio!`
 
     const encodedMessage = encodeURIComponent(message)
     const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodedMessage}`
 
-    alert(`✅ Pedido registado com sucesso!\nVocê será redirecionado para o nosso WhatsApp para concluir o atendimento.`)
+    alert(`✅ Pedido registado com sucesso!\nVocê será redirecionado para o WhatsApp para concluir o atendimento.`)
     
-    // Abre o WhatsApp numa nova aba
     window.open(whatsappUrl, '_blank')
 
     setSelectedGame(null)
@@ -108,10 +114,9 @@ export default function HomePage() {
   return (
     <div style={{ backgroundColor: '#080c14', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '20px' }}>
       
-      {/* Header com Logo Blue Brothers Coins */}
+      {/* Header */}
       <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Espaço reservado para o Sprite/Logo */}
           <div style={{ width: '42px', height: '42px', backgroundColor: '#0284c7', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '20px', color: '#fff', boxShadow: '0 0 15px rgba(2, 132, 199, 0.5)' }}>
             BB
           </div>
@@ -129,7 +134,7 @@ export default function HomePage() {
         </a>
       </header>
 
-      {/* Banner de Destaque */}
+      {/* Banner */}
       <section style={{ textAlign: 'center', margin: '45px 0 35px 0' }}>
         <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
           ⚡ Entrega Imediata & Cotação Atualizada
@@ -142,7 +147,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Grid de Servidores */}
+      {/* Grid */}
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
           {games.map((g) => (
@@ -162,7 +167,6 @@ export default function HomePage() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {/* Espaço reservado para o Sprite do Jogo no Futuro */}
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>
                       🎮
                     </div>
@@ -216,7 +220,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Modal de Pedido */}
+        {/* Modal */}
         {selectedGame && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
             <div style={{ backgroundColor: '#0f172a', padding: '32px', borderRadius: '20px', maxWidth: '450px', width: '100%', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
@@ -229,7 +233,6 @@ export default function HomePage() {
               </div>
               
               <form onSubmit={handleOrder}>
-                {/* Nome do Personagem / Nick */}
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
                     NOME DO SEU PERSONAGEM (NICK NO JOGO):
@@ -244,7 +247,6 @@ export default function HomePage() {
                   />
                 </div>
 
-                {/* Quantidade */}
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
                     QUANTIDADE DE {(selectedGame.currency_name || 'COINS').toUpperCase()}:
@@ -258,7 +260,6 @@ export default function HomePage() {
                     style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '16px', fontWeight: 'bold' }}
                   />
 
-                  {/* Atalhos */}
                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                     {[1000, 5000, 10000, 50000].map((quick) => (
                       <button
@@ -273,7 +274,6 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Preço Calculado */}
                 {amount && Number(amount) > 0 && (
                   <div style={{ marginBottom: '16px', padding: '14px', backgroundColor: '#1e293b', borderRadius: '10px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Total a Pagar:</span>
@@ -281,7 +281,6 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {/* Número do WhatsApp */}
                 <div style={{ marginBottom: '24px' }}>
                   <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
                     SEU WHATSAPP (COM DDD):
