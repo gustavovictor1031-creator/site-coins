@@ -7,7 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// NÚMERO DO SEU WHATSAPP PARA RECEBER OS PEDIDOS (Formato: 55 + DDD + Número)
+// 5534984113460 (Formato: 55 + DDD + Número)
 const ADMIN_WHATSAPP = '5534999999999'
 
 const FALLBACK_GAMES = [
