@@ -8,7 +8,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Mapeamento dos 6 servidores oficiais com as respetivas moedas
+// Mapeamento oficial dos 6 servidores e suas moedas
 const GAMES_CONFIG = [
   { name: 'Pokesigma', currency: 'diamond' },
   { name: 'Pokeidle World', currency: 'diamonds' },
