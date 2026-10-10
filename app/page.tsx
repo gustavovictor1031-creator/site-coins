@@ -1,365 +1,341 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+'use client';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('http') 
-  ? process.env.NEXT_PUBLIC_SUPABASE_URL 
-  : 'https://placeholder.supabase.co'
+import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-const ADMIN_WHATSAPP = '5534984113460'
-
-// MAPA DE SPRITES/ÍCONES DAS MOEDAS (Cole a URL da imagem/sprite entre as aspas quando quiser adicionar)
 const GAME_SPRITES: { [key: string]: string } = {
-  'Pokesigma': '', 
-  'Pokeidle World': '',
-  'Pokeidl': '',
-  'Huntera': '',
-  'Pokepixel': '',
-  'Pkhunt': ''
-}
+  'Pokesigma': '/pokesigma.png',
+  'Pokeidle World': '/pokeidle.png',
+  'Pokeidl': '/pokeidl.png',
+  'Huntera': '/huntera.png',
+  'Pokepixel': '/pokepixel.png',
+  'Pkhunt': '/safira.png'
+};
 
-const FALLBACK_GAMES = [
-  { id: 1, game_name: 'Pokesigma', currency_name: 'diamond', mode: 'selling', stock_quantity: 50000, price_per_unit: 4.50 },
-  { id: 2, game_name: 'Pokeidle World', currency_name: 'diamonds', mode: 'selling', stock_quantity: 120000, price_per_unit: 3.00 },
-  { id: 3, game_name: 'Pokeidl', currency_name: 'gemas', mode: 'selling', stock_quantity: 80000, price_per_unit: 5.00 },
-  { id: 4, game_name: 'Huntera', currency_name: 'coins', mode: 'selling', stock_quantity: 200000, price_per_unit: 2.50 },
-  { id: 5, game_name: 'Pokepixel', currency_name: 'diamonds', mode: 'selling', stock_quantity: 45000, price_per_unit: 6.00 },
-  { id: 6, game_name: 'Pkhunt', currency_name: 'safiras', mode: 'selling', stock_quantity: 30000, price_per_unit: 7.50 },
-]
-
-interface GameConfig {
-  id: number
-  game_name: string
-  currency_name: string
-  mode: string
-  stock_quantity: number
-  price_per_unit: number
+interface GameStock {
+  id: string;
+  game_name: string;
+  currency_name: string;
+  stock_amount: number;
+  price_per_unit: number;
 }
 
 export default function HomePage() {
-  const [games, setGames] = useState<GameConfig[]>(FALLBACK_GAMES)
-  const [selectedGame, setSelectedGame] = useState<GameConfig | null>(null)
-  const [amount, setAmount] = useState('')
-  const [characterName, setCharacterName] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [stocks, setStocks] = useState<GameStock[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedGame, setSelectedGame] = useState<string>('Todos');
+  const [selectedStock, setSelectedStock] = useState<GameStock | null>(null);
+  const [amountToBuy, setAmountToBuy] = useState<number>(1);
+  const [buyerEmail, setBuyerEmail] = useState<string>('');
+  const [step, setStep] = useState<'catalog' | 'checkout' | 'success'>('catalog');
+  const [purchaseError, setPurchaseError] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   useEffect(() => {
-    async function fetchGames() {
-      if (supabaseUrl.includes('placeholder')) return
+    fetchStocks();
+  }, []);
 
-      try {
-        const { data } = await supabase.from('site_config').select('*')
-        if (data && data.length > 0) {
-          setGames(data)
-        }
-      } catch (err) {
-        console.error('A usar dados de fallback:', err)
-      }
+  const fetchStocks = async () => {
+    try {
+      const { data, error } = await supabase.from('game_stock').select('*');
+      if (error) throw error;
+      if (data) setStocks(data);
+    } catch (err) {
+      console.error('Erro ao buscar stock:', err);
+    } finally {
+      setLoading(false);
     }
-    fetchGames()
-  }, [])
+  };
 
-  const calculatedTotal = selectedGame && amount 
-    ? (Number(amount) / 1000) * Number(selectedGame.price_per_unit || 0) 
-    : 0
+  const filteredStocks = selectedGame === 'Todos' 
+    ? stocks 
+    : stocks.filter(s => s.game_name === selectedGame);
 
-  const handleOrder = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedGame || !amount || !characterName || !whatsapp) return
+  const handleStartPurchase = (stock: GameStock) => {
+    setSelectedStock(stock);
+    setAmountToBuy(1);
+    setBuyerEmail('');
+    setPurchaseError('');
+    setStep('checkout');
+  };
 
-    setSubmitting(true)
+  const handleConfirmPurchase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStock) return;
+    if (amountToBuy <= 0 || amountToBuy > selectedStock.stock_amount) {
+      setPurchaseError('Quantidade inválida ou superior ao stock disponível.');
+      return;
+    }
+    if (!buyerEmail || !buyerEmail.includes('@')) {
+      setPurchaseError('Por favor, insira um e-mail válido.');
+      return;
+    }
 
-    const currencyText = selectedGame.currency_name || 'coins'
-    const orderType = selectedGame.mode === 'selling' ? 'Compra de Cliente' : 'Venda para Loja'
+    setIsProcessing(true);
+    setPurchaseError('');
 
     try {
-      if (!supabaseUrl.includes('placeholder')) {
-        await supabase.from('transactions').insert([
+      const newStockAmount = selectedStock.stock_amount - amountToBuy;
+      const { error: updateError } = await supabase
+        .from('game_stock')
+        .update({ stock_amount: newStockAmount })
+        .eq('id', selectedStock.id);
+
+      if (updateError) throw updateError;
+
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert([
           {
-            game_name: `${selectedGame.game_name} (${currencyText})`,
-            type: orderType,
-            amount: Number(amount),
-            total_price: calculatedTotal,
-            user_contact: whatsapp,
-            character_name: characterName,
+            game_name: selectedStock.game_name,
+            currency_name: selectedStock.currency_name,
+            amount: amountToBuy,
+            total_price: amountToBuy * selectedStock.price_per_unit,
+            buyer_email: buyerEmail,
+            status: 'completed',
+            created_at: new Date().toISOString()
           }
-        ])
+        ]);
+
+      if (orderError) {
+        console.error('Erro ao registar a ordem:', orderError);
       }
-    } catch (err) {
-      console.error(err)
+
+      setStocks(stocks.map(s => s.id === selectedStock.id ? { ...s, stock_amount: newStockAmount } : s));
+      setStep('success');
+    } catch (err: any) {
+      console.error('Erro na compra:', err);
+      setPurchaseError('Ocorreu um erro ao processar a compra. Tente novamente.');
+    } finally {
+      setIsProcessing(false);
     }
-
-    setSubmitting(false)
-
-    const message = `🔷 *NOVO PEDIDO - BLUE BROTHERS COINS* 🔷\n\n` +
-      `🎮 *Jogo:* ${selectedGame.game_name}\n` +
-      `💰 *Operação:* ${orderType}\n` +
-      `👤 *Personagem (Nick):* ${characterName}\n` +
-      `🪙 *Quantidade:* ${Number(amount).toLocaleString()} ${currencyText.toUpperCase()}\n` +
-      `💵 *Valor Total:* R$ ${calculatedTotal.toFixed(2)}\n` +
-      `📱 *WhatsApp do Cliente:* ${whatsapp}\n\n` +
-      `Aguardando confirmação para envio!`
-
-    const encodedMessage = encodeURIComponent(message)
-    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodedMessage}`
-
-    alert(`✅ Pedido registado com sucesso!\nVocê será redirecionado para o WhatsApp para concluir o atendimento.`)
-    
-    window.open(whatsappUrl, '_blank')
-
-    setSelectedGame(null)
-    setAmount('')
-    setCharacterName('')
-    setWhatsapp('')
-  }
+  };
 
   return (
-    <div style={{ backgroundColor: '#080c14', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '20px' }}>
-      
-      {/* Header Sem botão admin */}
-      <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '42px', height: '42px', backgroundColor: '#0284c7', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '20px', color: '#fff', boxShadow: '0 0 15px rgba(2, 132, 199, 0.5)' }}>
-            BB
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: '26px', fontWeight: '900', margin: 0, background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
-              BLUE BROTHERS COINS
+    <div style={{ 
+      backgroundImage: 'url(/fundo-site.png)', 
+      backgroundSize: 'cover', 
+      backgroundPosition: 'center', 
+      backgroundAttachment: 'fixed', 
+      color: '#f8fafc', 
+      minHeight: '100vh', 
+      fontFamily: 'system-ui, -apple-system, sans-serif', 
+      padding: '20px' 
+    }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        
+        {/* Cabeçalho */}
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div>
+            <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0 0 5px 0', background: 'linear-gradient(90deg, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Blue Brothers Coins
             </h1>
-            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Sua Loja Gamer de Confiança
-            </span>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>A sua plataforma segura para moedas e itens virtuais</p>
           </div>
-        </div>
-      </header>
+          {step !== 'catalog' && (
+            <button 
+              onClick={() => setStep('catalog')}
+              style={{ background: '#1e293b', border: '1px solid #334155', color: '#f8fafc', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
+            >
+              ← Voltar ao Catálogo
+            </button>
+          )}
+        </header>
 
-      {/* Banner */}
-      <section style={{ textAlign: 'center', margin: '45px 0 35px 0' }}>
-        <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-          ⚡ Entrega Imediata & Cotação Atualizada
-        </span>
-        <h2 style={{ fontSize: '40px', fontWeight: '900', margin: '15px 0 10px 0', letterSpacing: '-1px' }}>
-          Selecione o seu Servidor
-        </h2>
-        <p style={{ color: '#64748b', fontSize: '16px', maxWidth: '520px', margin: '0 auto' }}>
-          Compre ou venda moedas virtuais com total transparência e garantia de recebimento.
-        </p>
-      </section>
-
-      {/* Grid */}
-      <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-          {games.map((g) => {
-            const spriteUrl = GAME_SPRITES[g.game_name] || ''
-
-            return (
-              <div 
-                key={g.id || g.game_name} 
-                style={{ 
-                  backgroundColor: '#0f172a', 
-                  borderRadius: '20px', 
-                  padding: '28px', 
-                  border: '1px solid #1e293b',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {/* Espaço reservado para Sprite das moedas */}
-                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        {spriteUrl ? (
-                          <img src={spriteUrl} alt={g.game_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <span style={{ fontSize: '16px' }}>🎮</span>
-                        )}
-                      </div>
-                      <h3 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: '#f8fafc' }}>{g.game_name}</h3>
-                    </div>
-                    <span style={{ 
-                      backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
-                      color: g.mode === 'selling' ? '#4ade80' : '#f87171',
-                      padding: '6px 12px', 
-                      borderRadius: '20px', 
-                      fontSize: '12px',
-                      fontWeight: '800',
-                      border: g.mode === 'selling' ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      {g.mode === 'selling' ? '🟢 LOJA VENDE' : '🔴 LOJA COMPRA'}
-                    </span>
-                  </div>
-
-                  <div style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #334155' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>
-                        Preço / 1k (<strong style={{ color: '#38bdf8', textTransform: 'uppercase' }}>{g.currency_name || 'coins'}</strong>):
-                      </span>
-                      <strong style={{ color: '#22c55e', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Estoque em Loja:</span>
-                      <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity?.toLocaleString()}</strong>
-                    </div>
-                  </div>
-                </div>
-
+        {/* Conteúdo Principal */}
+        {step === 'catalog' && (
+          <main>
+            {/* Filtros de Jogos */}
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '15px', marginBottom: '25px' }}>
+              {['Todos', 'Pokesigma', 'Pokeidle World', 'Pokeidl', 'Huntera', 'Pokepixel', 'Pkhunt'].map((game) => (
                 <button
-                  onClick={() => setSelectedGame(g)}
+                  key={game}
+                  onClick={() => setSelectedGame(game)}
                   style={{
-                    width: '100%',
-                    padding: '14px',
-                    background: g.mode === 'selling' ? 'linear-gradient(to right, #0284c7, #0369a1)' : 'linear-gradient(to right, #dc2626, #b91c1c)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontWeight: '800',
+                    background: selectedGame === game ? '#3b82f6' : '#1e293b',
+                    color: selectedGame === game ? '#ffffff' : '#cbd5e1',
+                    border: selectedGame === game ? '1px solid #60a5fa' : '1px solid #334155',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
-                    fontSize: '16px',
-                    boxShadow: g.mode === 'selling' ? '0 4px 15px rgba(2, 132, 199, 0.4)' : '0 4px 15px rgba(220, 38, 38, 0.4)'
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s'
                   }}
                 >
-                  {g.mode === 'selling' ? `🛒 Comprar ${g.currency_name || 'Coins'}` : `💰 Vender ${g.currency_name || 'Coins'}`}
+                  {game}
                 </button>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Modal */}
-        {selectedGame && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
-            <div style={{ backgroundColor: '#0f172a', padding: '32px', borderRadius: '20px', maxWidth: '450px', width: '100%', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ marginTop: 0, marginBottom: 0, fontSize: '20px', fontWeight: '800' }}>
-                  {selectedGame.mode === 'selling' ? `🛒 Comprar - ${selectedGame.game_name}` : `💰 Vender - ${selectedGame.game_name}`}
-                </h3>
-                <button onClick={() => setSelectedGame(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>✕</button>
-              </div>
-              
-              <form onSubmit={handleOrder}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
-                    NOME DO SEU PERSONAGEM (NICK NO JOGO):
-                  </label>
-                  <input 
-                    type="text" 
-                    value={characterName} 
-                    onChange={(e) => setCharacterName(e.target.value)}
-                    placeholder="Ex: PlayerOne"
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '15px' }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
-                    QUANTIDADE DE {(selectedGame.currency_name || 'COINS').toUpperCase()}:
-                  </label>
-                  <input 
-                    type="number" 
-                    value={amount} 
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Ex: 10000"
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '16px', fontWeight: 'bold' }}
-                  />
-
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    {[1000, 5000, 10000, 50000].map((quick) => (
-                      <button
-                        key={quick}
-                        type="button"
-                        onClick={() => setAmount(String(quick))}
-                        style={{ flex: 1, padding: '6px', backgroundColor: '#1e293b', color: '#38bdf8', border: '1px solid #334155', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        +{quick >= 1000 ? `${quick / 1000}k` : quick}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {amount && Number(amount) > 0 && (
-                  <div style={{ marginBottom: '16px', padding: '14px', backgroundColor: '#1e293b', borderRadius: '10px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Total a Pagar:</span>
-                    <strong style={{ fontSize: '20px', color: '#22c55e' }}>R$ {calculatedTotal.toFixed(2)}</strong>
-                  </div>
-                )}
-
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>
-                    SEU WHATSAPP (COM DDD):
-                  </label>
-                  <input 
-                    type="text" 
-                    value={whatsapp} 
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    placeholder="Ex: (34) 99999-9999"
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '15px' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button 
-                    type="button" 
-                    onClick={() => setSelectedGame(null)}
-                    style={{ flex: 1, padding: '14px', backgroundColor: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="submit" 
-                    disabled={submitting}
-                    style={{ flex: 1, padding: '14px', background: 'linear-gradient(to right, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
-                  >
-                    {submitting ? 'A enviar...' : 'Confirmar & Ir p/ WhatsApp'}
-                  </button>
-                </div>
-              </form>
+              ))}
             </div>
+
+            {/* Listagem de Produtos / Stock */}
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '50px', color: '#94a3b8' }}>A carregar stock disponível...</div>
+            ) : filteredStocks.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '50px', background: 'rgba(30, 41, 59, 0.7)', borderRadius: '12px', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ color: '#94a3b8', fontSize: '16px', margin: 0 }}>Nenhum item disponível no momento para este jogo.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                {filteredStocks.map((stock) => {
+                  const spriteUrl = GAME_SPRITES[stock.game_name];
+                  return (
+                    <div 
+                      key={stock.id}
+                      style={{
+                        background: 'rgba(15, 23, 42, 0.85)',
+                        border: '1px solid rgba(51, 65, 85, 0.8)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '12px', background: '#334155', color: '#93c5fd', padding: '4px 8px', borderRadius: '6px', fontWeight: '600' }}>
+                            {stock.game_name}
+                          </span>
+                          <span style={{ fontSize: '13px', color: stock.stock_amount > 0 ? '#4ade80' : '#f87171', fontWeight: '600' }}>
+                            {stock.stock_amount > 0 ? `${stock.stock_amount} em stock` : 'Esgotado'}
+                          </span>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
+                          {spriteUrl ? (
+                            <img src={spriteUrl} alt={stock.currency_name} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+                          ) : (
+                            <span style={{ fontSize: '32px' }}>💎</span>
+                          )}
+                          <div>
+                            <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#f8fafc' }}>{stock.currency_name}</h3>
+                            <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#38bdf8' }}>
+                              R$ {Number(stock.price_per_unit).toFixed(2)} <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'normal' }}>/ un</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        disabled={stock.stock_amount <= 0}
+                        onClick={() => handleStartPurchase(stock)}
+                        style={{
+                          width: '100%',
+                          background: stock.stock_amount > 0 ? 'linear-gradient(90deg, #2563eb, #3b82f6)' : '#334155',
+                          color: stock.stock_amount > 0 ? '#ffffff' : '#94a3b8',
+                          border: 'none',
+                          padding: '12px',
+                          borderRadius: '10px',
+                          fontWeight: 'bold',
+                          cursor: stock.stock_amount > 0 ? 'pointer' : 'not-allowed',
+                          transition: 'opacity 0.2s'
+                        }}
+                      >
+                        {stock.stock_amount > 0 ? 'Comprar Agora' : 'Indisponível'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </main>
+        )}
+
+        {/* Ecrã de Checkout */}
+        {step === 'checkout' && selectedStock && (
+          <div style={{ maxWidth: '500px', margin: '40px auto', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '30px', borderRadius: '16px', backdropFilter: 'blur(10px)' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '20px', fontSize: '22px', color: '#f8fafc' }}>Finalizar Compra</h2>
+            
+            <div style={{ background: '#1e293b', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #334155' }}>
+              <p style={{ margin: '0 0 5px 0', color: '#94a3b8', fontSize: '13px' }}>Item Selecionado:</p>
+              <p style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: 'bold', color: '#f8fafc' }}>{selectedStock.currency_name} ({selectedStock.game_name})</p>
+              <p style={{ margin: 0, color: '#38bdf8', fontSize: '14px', fontWeight: '650' }}>Preço Unitário: R$ {Number(selectedStock.price_per_unit).toFixed(2)}</p>
+            </div>
+
+            {purchaseError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '14px' }}>
+                {purchaseError}
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmPurchase}>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', color: '#cbd5e1' }}>Quantidade:</label>
+                <input 
+                  type="number"
+                  min="1"
+                  max={selectedStock.stock_amount}
+                  value={amountToBuy}
+                  onChange={(e) => setAmountToBuy(parseInt(e.target.value) || 1)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#1e293b', border: '1px solid #334155', color: '#fff', fontSize: '16px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', color: '#cbd5e1' }}>Seu E-mail (para entrega):</label>
+                <input 
+                  type="email"
+                  required
+                  placeholder="exemplo@email.com"
+                  value={buyerEmail}
+                  onChange={(e) => setBuyerEmail(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#1e293b', border: '1px solid #334155', color: '#fff', fontSize: '16px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ background: '#1e293b', padding: '15px', borderRadius: '10px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: '14px' }}>Total a pagar:</span>
+                <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#4ade80' }}>
+                  R$ {(amountToBuy * Number(selectedStock.price_per_unit)).toFixed(2)}
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  background: isProcessing ? '#475569' : '#22c55e',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isProcessing ? 'A processar...' : 'Confirmar e Pagar'}
+              </button>
+            </form>
           </div>
         )}
 
-        {/* Seção Quem Somos */}
-        <section style={{ marginTop: '70px', backgroundColor: '#0f172a', borderRadius: '20px', padding: '40px', border: '1px solid #1e293b' }}>
-          <h2 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '15px', color: '#38bdf8' }}>
-            Quem Somos - Blue Brothers Coins
-          </h2>
-          <p style={{ color: '#94a3b8', lineHeight: '1.7', fontSize: '15px', marginBottom: '20px' }}>
-            A **Blue Brothers Coins** é a sua plataforma especializada no comércio de moedas virtuais para os principais servidores de jogos online. Fundada com o compromisso de entregar segurança máxima, rapidez absoluta e cotações justas, facilitamos o processo de compra e venda com atendimento dedicado via WhatsApp.
-          </p>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginTop: '25px' }}>
-            <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>⚡ Entrega Rápida</h3>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Transferências efetuadas logo após a confirmação do pagamento.</p>
-            </div>
-            <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>🛡️ 100% Seguro</h3>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Processo transparente e suporte humanizado direto no WhatsApp.</p>
-            </div>
-            <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>💎 Melhores Cotações</h3>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Preços atualizados diariamente para garantir a melhor negociação.</p>
-            </div>
+        {/* Ecrã de Sucesso */}
+        {step === 'success' && (
+          <div style={{ maxWidth: '500px', margin: '40px auto', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '40px 30px', borderRadius: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
+            <div style={{ fontSize: '50px', marginBottom: '15px' }}>🎉</div>
+            <h2 style={{ marginTop: 0, color: '#4ade80', marginBottom: '10px' }}>Compra Realizada com Sucesso!</h2>
+            <p style={{ color: '#94a3b8', fontSize: '15px', lineHeight: '1.5', marginBottom: '25px' }}>
+              Obrigado pela sua compra. Os detalhes e instruções de entrega foram enviados para o ecrã e registados no nosso sistema.
+            </p>
+            <button
+              onClick={() => setStep('catalog')}
+              style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
+            >
+              Voltar ao Início
+            </button>
           </div>
-        </section>
+        )}
 
-      </main>
-
-      {/* Footer */}
-      <footer style={{ maxWidth: '1100px', margin: '50px auto 20px auto', textAlign: 'center', borderTop: '1px solid #1e293b', paddingTop: '20px', color: '#64748b', fontSize: '13px' }}>
-        © 2026 Blue Brothers Coins. Todos os direitos reservados.
-      </footer>
+      </div>
     </div>
-  )
+  );
 }
