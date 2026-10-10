@@ -37,7 +37,6 @@ export default function HomePage() {
     fetchGames()
   }, [])
 
-  // Cálculo automático do preço total (Preço por 1000 coins * (quantidade / 1000))
   const calculatedTotal = selectedGame && amount 
     ? (Number(amount) / 1000) * Number(selectedGame.price_per_unit || 0) 
     : 0
@@ -63,7 +62,7 @@ export default function HomePage() {
     if (error) {
       alert('Erro ao processar pedido: ' + error.message)
     } else {
-      alert('Pedido enviado com sucesso! Entraremos em contacto brevemente.')
+      alert('🚀 Pedido enviado com sucesso! Entraremos em contacto brevemente.')
       setSelectedGame(null)
       setAmount('')
       setContact('')
@@ -71,140 +70,171 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ backgroundColor: '#0f172a', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
+    <div style={{ backgroundColor: '#080c14', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
+      
       {/* Header */}
       <header style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#38bdf8', margin: 0 }}>🪙 CoinsStore Gamer</h1>
-        <a href="/admin" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '14px', border: '1px solid #334155', padding: '8px 16px', borderRadius: '6px' }}>Área do Admin</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '32px' }}>🪙</span>
+          <h1 style={{ fontSize: '26px', fontWeight: '900', margin: 0, background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
+            COINS STORE
+          </h1>
+        </div>
+        <a href="/admin" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '13px', background: '#0f172a', border: '1px solid #334155', padding: '10px 18px', borderRadius: '8px', fontWeight: 'bold' }}>
+          ⚙️ Painel Admin
+        </a>
       </header>
 
-      {/* Hero Banner */}
-      <section style={{ textAlign: 'center', margin: '40px 0' }}>
-        <h2 style={{ fontSize: '36px', fontWeight: '800', marginBottom: '10px' }}>Compre & Venda Coins com Segurança</h2>
-        <p style={{ color: '#94a3b8', fontSize: '18px' }}>Selecione o seu servidor abaixo e faça o seu pedido instantaneamente.</p>
+      {/* Banner Principal */}
+      <section style={{ textAlign: 'center', margin: '50px 0 40px 0' }}>
+        <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+          ⚡ Entrega Rápida & Segura
+        </span>
+        <h2 style={{ fontSize: '42px', fontWeight: '900', margin: '15px 0 10px 0', letterSpacing: '-1px' }}>
+          Escolha o seu Servidor
+        </h2>
+        <p style={{ color: '#64748b', fontSize: '18px', maxWidth: '500px', margin: '0 auto' }}>
+          Compre e venda coins dos melhores servidores com cotação atualizada em tempo real.
+        </p>
       </section>
 
-      {/* Main Grid */}
+      {/* Lista de Servidores em Grid */}
       <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
         {loading ? (
-          <p style={{ textAlign: 'center', color: '#94a3b8' }}>A carregar servidores...</p>
+          <p style={{ textAlign: 'center', color: '#64748b', fontSize: '18px' }}>A carregar servidores...</p>
         ) : games.length === 0 ? (
-          <div style={{ textAlign: 'center', background: '#1e293b', padding: '40px', borderRadius: '12px', border: '1px solid #334155' }}>
-            <p style={{ margin: 0, color: '#94a3b8' }}>Nenhum jogo disponível no momento. Aceda ao <a href="/admin" style={{ color: '#38bdf8' }}>Painel Admin</a> para cadastrar os jogos.</p>
+          <div style={{ textAlign: 'center', background: '#0f172a', padding: '50px', borderRadius: '16px', border: '1px solid #1e293b' }}>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '16px' }}>Nenhum servidor configurado. Aceda ao <a href="/admin" style={{ color: '#38bdf8', fontWeight: 'bold' }}>Painel Admin</a> para definir os preços e stocks.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
             {games.map((g) => (
               <div 
                 key={g.id} 
                 style={{ 
-                  backgroundColor: '#1e293b', 
-                  borderRadius: '12px', 
-                  padding: '24px', 
-                  border: '1px solid #334155',
+                  backgroundColor: '#0f172a', 
+                  borderRadius: '16px', 
+                  padding: '28px', 
+                  border: '1px solid #1e293b',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  justify: 'space-between',
+                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h3 style={{ fontSize: '22px', margin: 0, textTransform: 'capitalize' }}>{g.game_name}</h3>
+                  {/* Tag de Estado */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '24px', fontWeight: '800', margin: 0, textTransform: 'capitalize', color: '#f8fafc' }}>{g.game_name}</h3>
                     <span style={{ 
-                      backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)', 
+                      backgroundColor: g.mode === 'selling' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
                       color: g.mode === 'selling' ? '#4ade80' : '#f87171',
-                      padding: '4px 10px', 
+                      padding: '6px 12px', 
                       borderRadius: '20px', 
                       fontSize: '12px',
-                      fontWeight: 'bold'
+                      fontWeight: '800',
+                      border: g.mode === 'selling' ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
                     }}>
-                      {g.mode === 'selling' ? 'Disponível' : 'A Comprar'}
+                      {g.mode === 'selling' ? '🟢 LOJA VENDE' : '🔴 LOJA COMPRA'}
                     </span>
                   </div>
-                  <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>
-                    Stock Atual: <strong style={{ color: '#f8fafc' }}>{g.stock_quantity.toLocaleString()} Coins</strong>
-                  </p>
-                  <p style={{ color: '#38bdf8', fontSize: '15px', marginBottom: '20px', fontWeight: 'bold' }}>
-                    Preço: R$ {Number(g.price_per_unit || 0).toFixed(2)} <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'normal' }}>(por 1k)</span>
-                  </p>
+
+                  {/* Informações de Preço e Stock */}
+                  <div style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #334155' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Preço / 1k:</span>
+                      <strong style={{ color: '#38bdf8', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8', fontSize: '14px' }}>Stock Disponível:</span>
+                      <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity.toLocaleString()} Coins</strong>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Botão de Ação Clicável */}
                 <button
                   onClick={() => setSelectedGame(g)}
                   style={{
                     width: '100%',
-                    padding: '12px',
-                    backgroundColor: g.mode === 'selling' ? '#0284c7' : '#dc2626',
+                    padding: '14px',
+                    background: g.mode === 'selling' ? 'linear-gradient(to right, #0284c7, #0369a1)' : 'linear-gradient(to right, #dc2626, #b91c1c)',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
+                    borderRadius: '10px',
+                    fontWeight: '800',
                     cursor: 'pointer',
-                    fontSize: '16px'
+                    fontSize: '16px',
+                    letterSpacing: '0.5px',
+                    boxShadow: g.mode === 'selling' ? '0 4px 15px rgba(2, 132, 199, 0.4)' : '0 4px 15px rgba(220, 38, 38, 0.4)'
                   }}
                 >
-                  {g.mode === 'selling' ? 'Comprar Coins' : 'Vender para a Loja'}
+                  {g.mode === 'selling' ? '🛒 Comprar Coins' : '💰 Vender Minhas Coins'}
                 </button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Modal de Pedido com Cálculo Automático */}
+        {/* Modal de Pedido Elegante */}
         {selectedGame && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
-            <div style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', maxWidth: '450px', width: '100%', border: '1px solid #334155' }}>
-              <h3 style={{ marginTop: 0, fontSize: '22px', textTransform: 'capitalize' }}>
-                {selectedGame.mode === 'selling' ? `Comprar - ${selectedGame.game_name}` : `Vender - ${selectedGame.game_name}`}
-              </h3>
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
+            <div style={{ backgroundColor: '#0f172a', padding: '32px', borderRadius: '20px', maxWidth: '450px', width: '100%', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ marginTop: 0, marginBottom: 0, fontSize: '22px', textTransform: 'capitalize', fontWeight: '800' }}>
+                  {selectedGame.mode === 'selling' ? `🛒 Comprar - ${selectedGame.game_name}` : `💰 Vender - ${selectedGame.game_name}`}
+                </h3>
+                <button onClick={() => setSelectedGame(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+              </div>
               
               <form onSubmit={handleOrder}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', marginBottom: '6px', color: '#94a3b8' }}>Quantidade de Coins:</label>
+                <div style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#94a3b8', fontWeight: 'bold' }}>QUANTIDADE DE COINS:</label>
                   <input 
                     type="number" 
                     value={amount} 
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Ex: 5000"
+                    placeholder="Ex: 10000"
                     required
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '16px', fontWeight: 'bold' }}
                   />
                 </div>
 
-                {/* Caixa de resumo do preço calculado */}
+                {/* Cálculo do Preço Total */}
                 {amount && Number(amount) > 0 && (
-                  <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#0f172a', borderRadius: '6px', border: '1px solid #334155' }}>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#94a3b8' }}>Valor Total a Pagar / Receber:</p>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#22c55e' }}>
-                      R$ {calculatedTotal.toFixed(2)}
-                    </p>
+                  <div style={{ marginBottom: '18px', padding: '16px', backgroundColor: '#1e293b', borderRadius: '10px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Estimado:</span>
+                    <strong style={{ fontSize: '22px', color: '#22c55e' }}>R$ {calculatedTotal.toFixed(2)}</strong>
                   </div>
                 )}
 
                 <div style={{ marginBottom: '24px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', marginBottom: '6px', color: '#94a3b8' }}>O seu Discord ou WhatsApp:</label>
+                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#94a3b8', fontWeight: 'bold' }}>SEU DISCORD OU WHATSAPP:</label>
                   <input 
                     type="text" 
                     value={contact} 
                     onChange={(e) => setContact(e.target.value)}
-                    placeholder="Ex: user#1234 ou (11) 99999-9999"
+                    placeholder="Ex: seu_discord ou (11) 99999-9999"
                     required
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '15px' }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
                   <button 
                     type="button" 
                     onClick={() => setSelectedGame(null)}
-                    style={{ flex: 1, padding: '12px', backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '14px', backgroundColor: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit" 
                     disabled={submitting}
-                    style={{ flex: 1, padding: '12px', backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '14px', background: 'linear-gradient(to right, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
                   >
                     {submitting ? 'A enviar...' : 'Confirmar Pedido'}
                   </button>
