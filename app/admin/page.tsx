@@ -159,7 +159,7 @@ export default function AdminPage() {
                   </div>
                   {gameData ? (
                     <div style={{ fontSize: '11px', color: '#4ade80', marginTop: '6px' }}>
-                      Estoque: {gameData.stock_quantity.toLocaleString()}
+                      Estoque: {gameData.stock_quantity?.toLocaleString()}
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '6px' }}>
