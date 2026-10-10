@@ -211,3 +211,53 @@ export default function HomePage() {
                         type="button"
                         onClick={() => setAmount(String(quick))}
                         style={{ flex: 1, padding: '6px', backgroundColor: '#1e293b', color: '#38bdf8', border: '1px solid #334155', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        +{quick >= 1000 ? `${quick / 1000}k` : quick}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {amount && Number(amount) > 0 && (
+                  <div style={{ marginBottom: '18px', padding: '16px', backgroundColor: '#1e293b', borderRadius: '10px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: '#94a3b8' }}>Valor Estimado Total:</span>
+                    <strong style={{ fontSize: '22px', color: '#22c55e' }}>R$ {calculatedTotal.toFixed(2)}</strong>
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', color: '#94a3b8', fontWeight: '800' }}>SEU DISCORD OU WHATSAPP:</label>
+                  <input 
+                    type="text" 
+                    value={contact} 
+                    onChange={(e) => setContact(e.target.value)}
+                    placeholder="Ex: seu_discord ou (11) 99999-9999"
+                    required
+                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', boxSizing: 'border-box', fontSize: '15px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setSelectedGame(null)}
+                    style={{ flex: 1, padding: '14px', backgroundColor: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={submitting}
+                    style={{ flex: 1, padding: '14px', background: 'linear-gradient(to right, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
+                  >
+                    {submitting ? 'A enviar...' : 'Confirmar Pedido'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
