@@ -9,7 +9,6 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Configuração dos ícones/sprites (Pokébola na frente dos pokémons e Tibia para Huntera)
 const GAME_SPRITES: { [key: string]: { icon: string; sprite: string } } = {
   'Pokesigma': { icon: '/pokeball.png', sprite: '/pokesigma.png' },
   'Pokeidle World': { icon: '/pokeball.png', sprite: '/pokeidle.png' },
@@ -30,6 +29,13 @@ const FALLBACK_GAMES = [
   { id: 6, game_name: 'Pkhunt', currency_name: 'safiras', mode: 'selling', stock_quantity: 30000, price_per_unit: 7.50 },
 ];
 
+const FAQS = [
+  { q: '⚡ Como recebo minhas moedas após a compra?', a: 'Após a confirmação no WhatsApp, enviamos as moedas diretamente para o seu personagem no jogo via trade ou correio interno.' },
+  { q: '⏱️ Quanto tempo leva a entrega?', a: 'A entrega é imediata! Assim que o pagamento é verificado, nosso operador realiza o envio em questão de minutos.' },
+  { q: '🛡️ É seguro comprar na Blue Brothers Coins?', a: 'Com certeza! Garantimos sigilo absoluto, transações seguras e atendimento 100% humanizado.' },
+  { q: '💰 Como funciona para eu vender minhas moedas para a loja?', a: 'Selecione o servidor com a tag "LOJA COMPRA", informe a quantidade disponível e entre em contato via WhatsApp para combinar o pagamento via PIX.' }
+];
+
 interface GameConfig {
   id: number;
   game_name: string;
@@ -46,6 +52,7 @@ export default function HomePage() {
   const [characterName, setCharacterName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchGames() {
@@ -176,18 +183,17 @@ export default function HomePage() {
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   backdropFilter: 'blur(10px)',
-                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.6)'
+                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.6)',
+                  transition: 'transform 0.2s, border-color 0.2s'
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {/* Ícone customizado (Pokébola ou Tibia) na frente */}
                       {gameSpriteInfo?.icon ? (
                         <img src={gameSpriteInfo.icon} alt="ícone" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
                       ) : null}
 
-                      {/* Sprite secundário do jogo */}
                       <div style={{ width: '38px', height: '38px', borderRadius: '8px', backgroundColor: 'rgba(30, 41, 59, 0.9)', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {gameSpriteInfo?.sprite ? (
                           <img src={gameSpriteInfo.sprite} alt={g.game_name} style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
@@ -219,7 +225,7 @@ export default function HomePage() {
                       </span>
                       <strong style={{ color: '#22c55e', fontSize: '16px' }}>R$ {Number(g.price_per_unit || 0).toFixed(2)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: '#94a3b8', fontSize: '14px' }}>Estoque em Loja:</span>
                       <strong style={{ color: '#f8fafc', fontSize: '14px' }}>{g.stock_quantity?.toLocaleString()}</strong>
                     </div>
@@ -344,8 +350,41 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Seção FAQ - Perguntas Frequentes */}
+        <section style={{ marginTop: '50px', backgroundColor: 'rgba(15, 23, 42, 0.85)', borderRadius: '20px', padding: '35px', border: '1px solid rgba(51, 65, 85, 0.8)', backdropFilter: 'blur(10px)' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '20px', color: '#38bdf8', textAlign: 'center' }}>
+            ❓ Perguntas Frequentes
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {FAQS.map((faq, index) => (
+              <div 
+                key={index}
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                style={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  border: '1px solid #334155',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '15px' }}>
+                  <span>{faq.q}</span>
+                  <span style={{ color: '#38bdf8' }}>{openFaq === index ? '▲' : '▼'}</span>
+                </div>
+                {openFaq === index && (
+                  <p style={{ margin: '12px 0 0 0', color: '#cbd5e1', fontSize: '14px', lineHeight: '1.6' }}>
+                    {faq.a}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Seção Quem Somos */}
-        <section style={{ marginTop: '70px', backgroundColor: 'rgba(15, 23, 42, 0.85)', borderRadius: '20px', padding: '40px', border: '1px solid rgba(51, 65, 85, 0.8)', backdropFilter: 'blur(10px)' }}>
+        <section style={{ marginTop: '40px', backgroundColor: 'rgba(15, 23, 42, 0.85)', borderRadius: '20px', padding: '40px', border: '1px solid rgba(51, 65, 85, 0.8)', backdropFilter: 'blur(10px)' }}>
           <h2 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '15px', color: '#38bdf8' }}>
             Quem Somos - Blue Brothers Coins
           </h2>
@@ -370,6 +409,33 @@ export default function HomePage() {
         </section>
 
       </main>
+
+      {/* Botão Flutuante do WhatsApp */}
+      <a 
+        href={`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent('Olá! Vim pelo site da Blue Brothers Coins e gostaria de tirar uma dúvida.')}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: 'fixed',
+          bottom: '25px',
+          right: '25px',
+          backgroundColor: '#22c55e',
+          color: '#ffffff',
+          borderRadius: '50px',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 8px 25px rgba(34, 197, 94, 0.5)',
+          textDecoration: 'none',
+          fontWeight: '800',
+          fontSize: '14px',
+          zIndex: 999,
+          border: '2px solid #ffffff'
+        }}
+      >
+        <span style={{ fontSize: '20px' }}>💬</span> Fale Conosco
+      </a>
 
       {/* Footer */}
       <footer style={{ maxWidth: '1100px', margin: '50px auto 20px auto', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', color: '#94a3b8', fontSize: '13px' }}>
